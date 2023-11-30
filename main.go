@@ -1,12 +1,22 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
+)
+
+const (
+	host     = "localhost"
+	port     = "5432"
+	user     = "postgres"
+	password = "postgres"
+	dbname   = "usermangedb"
 )
 
 // user represents data about a new user.
@@ -118,7 +128,6 @@ func verifyOtp(c *gin.Context) {
 }
 
 func validateExpirationTimeOTP(phoneNo string) bool {
-	fmt.Println("OTP exp time given is", otp)
 	// Loop over the list of users, looking for
 	// a user whose OTP value matches the parameter.
 	for _, a := range users {
@@ -145,7 +154,22 @@ func validateOTP(phoneNo string, otp string) bool {
 	return false
 }
 
+func checkError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
 func main() {
+	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", psqlconn)
+	checkError(err)
+
+	defer db.Close()
+
+	insertstmt := "insert into users(name,phone_number) values('tname','234567890')"
+	_, e := db.Exec(insertstmt)
+	checkError(e)
+
 	router := gin.Default()
 	router.GET("/users", getUsers)
 	router.POST("/api/users", postUsers)
